@@ -111,7 +111,7 @@ class PromptBuilderService {
       'No introducir precios, promociones ni cifras comerciales.',
       'No cambiar la arquitectura real, proporciones confirmadas ni ubicación de montaje para mejorar el impacto visual.',
       'No agregar objetos, textos, estructuras o elementos que no fueron solicitados.',
-      'No proponer materiales, uniones o iluminación imposibles de fabricar.',
+      'No proponer materiales, ensambles o iluminación imposibles de fabricar.',
       'La imagen es una propuesta visual; no conversar directamente con el cliente.',
     ].filter(Boolean).join('\n');
 
