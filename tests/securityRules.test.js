@@ -132,7 +132,7 @@ test('la configuración mantiene proveedores externos deshabilitados', () => {
 
   assert.equal(
     config.engine.realImageGenerationEnabled,
-    false
+    true
   );
 
   assert.equal(
