@@ -4,10 +4,11 @@
   "description": "Motor desacoplado de diseño del ecosistema ELANKAV.",
   "private": true,
   "type": "commonjs",
-  "main": "engine/DesignEngine.js",
+  "main": "server.js",
   "scripts": {
     "test": "node --test",
-    "check": "find engine services adapters profiles config errors tests -type f -name '*.js' -print0 | xargs -0 -n1 node --check"
+    "check": "find engine services adapters profiles config errors tests -type f -name '*.js' -print0 | xargs -0 -n1 node --check",
+    "start": "node server.js"
   },
   "engines": {
     "node": ">=20"
