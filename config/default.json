@@ -2,7 +2,7 @@
   "engine": {
     "entrySource": "ELAN_IA",
     "directClientConversation": false,
-    "externalProvidersEnabled": true,
+    "externalProvidersEnabled": false,
     "realImageGenerationEnabled": true,
     "videoGenerationEnabled": false,
     "productionSupabaseEnabled": false
