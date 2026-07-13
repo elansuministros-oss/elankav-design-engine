@@ -30,7 +30,7 @@ test('adapter rechaza falta de clave', async () => {
   );
 });
 
-test('adapter usa modelo configurable y procesa b64_json', async () => {
+test('adapter usa modelo configurable y payload compatible con GPT Image', async () => {
   let sentBody;
   const source = Buffer.from('png-test');
   const adapter = new OpenAIImageAdapter({
@@ -52,7 +52,8 @@ test('adapter usa modelo configurable y procesa b64_json', async () => {
   });
 
   assert.equal(sentBody.model, 'image-model-test');
-  assert.equal(sentBody.response_format, 'b64_json');
+  assert.equal(sentBody.output_format, 'png');
+  assert.equal('response_format' in sentBody, false);
   assert.equal(result.model, 'image-model-test');
   assert.equal(result.mimeType, 'image/png');
   assert.deepEqual(result.buffer, source);
