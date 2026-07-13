@@ -1,0 +1,173 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DesignRequest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "requestId",
+    "actor",
+    "client",
+    "platform",
+    "channel",
+    "projectType",
+    "measurements",
+    "measurementStatus",
+    "environment",
+    "brandAssets",
+    "references",
+    "instructions",
+    "proposalConsumed",
+    "outputLevel",
+    "costAuthorization"
+  ],
+  "properties": {
+    "requestId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "actor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source", "id", "role"],
+      "properties": {
+        "source": {
+          "const": "ELAN_IA"
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "role": {
+          "enum": ["CLIENT", "OWNER", "ADMIN", "OPERATOR", "SYSTEM"]
+        }
+      }
+    },
+    "client": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "name": {
+          "type": ["string", "null"]
+        }
+      }
+    },
+    "platform": {
+      "type": "string",
+      "minLength": 1
+    },
+    "channel": {
+      "enum": ["WHATSAPP", "WEB", "OWNER_MODE", "ADMIN", "INTERNAL"]
+    },
+    "projectType": {
+      "enum": [
+        "BRAND_REQUEST",
+        "LOGO_REQUEST",
+        "SIGNAGE_REQUEST",
+        "FACADE_REQUEST",
+        "INTERIOR_REQUEST",
+        "INSTAGRAMMABLE_REQUEST",
+        "VEHICLE_REQUEST",
+        "RENDER_REQUEST",
+        "VIDEO_REQUEST",
+        "CAMPAIGN_ASSET_REQUEST",
+        "CUSTOM_DESIGN_REQUEST"
+      ]
+    },
+    "measurements": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "value", "unit"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "value": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "unit": {
+            "enum": ["mm", "cm", "m"]
+          }
+        }
+      }
+    },
+    "measurementStatus": {
+      "enum": ["CONFIRMED", "ESTIMATED", "MISSING"]
+    },
+    "environment": {
+      "enum": ["INTERIOR", "EXTERIOR", "MIXED", "NOT_APPLICABLE"]
+    },
+    "brandAssets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type", "logicalPath"],
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "logicalPath": {
+            "type": "string",
+            "minLength": 1
+          },
+          "approved": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "references": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type", "logicalPath"],
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "logicalPath": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "instructions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "proposalConsumed": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "outputLevel": {
+      "enum": ["PLAN", "CONCEPT", "RENDER", "PRESENTATION"]
+    },
+    "costAuthorization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["authorized"],
+      "properties": {
+        "authorized": {
+          "type": "boolean"
+        },
+        "authorizationId": {
+          "type": ["string", "null"]
+        }
+      }
+    },
+    "directClientConversation": {
+      "const": false
+    }
+  }
+}

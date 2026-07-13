@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://elankav.com/schemas/ProposalAuthorization.schema.json",
+  "title": "ProposalAuthorization",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "authorizationId",
+    "projectId",
+    "clientId",
+    "administratorId",
+    "administratorIdentity",
+    "reason",
+    "additionalQuantity",
+    "authorizedAt",
+    "audit"
+  ],
+  "properties": {
+    "authorizationId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "projectId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "clientId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "administratorId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "administratorIdentity": {
+      "type": "string",
+      "minLength": 1
+    },
+    "reason": {
+      "type": "string",
+      "minLength": 1
+    },
+    "additionalQuantity": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "authorizedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "audit": {
+      "type": "object"
+    }
+  }
+}

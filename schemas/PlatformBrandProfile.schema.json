@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://elankav.com/schemas/PlatformBrandProfile.schema.json",
+  "title": "PlatformBrandProfile",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "platform",
+    "version",
+    "logoLogicalPath",
+    "watermarkLogicalPath",
+    "commercialData",
+    "palette",
+    "typography"
+  ],
+  "properties": {
+    "platform": {
+      "type": "string",
+      "minLength": 1
+    },
+    "version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "logoLogicalPath": {
+      "type": "string",
+      "minLength": 1
+    },
+    "watermarkLogicalPath": {
+      "type": "string",
+      "minLength": 1
+    },
+    "commercialData": {
+      "type": "object"
+    },
+    "palette": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "typography": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "deliveryTemplate": {
+      "type": ["string", "null"]
+    }
+  }
+}
