@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "profiles": [],
+  "rules": {
+    "versioned": true,
+    "externalAssetsInGit": false,
+    "pricesInsidePrompts": false
+  }
+}

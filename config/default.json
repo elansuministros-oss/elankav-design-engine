@@ -1,0 +1,18 @@
+{
+  "engine": {
+    "entrySource": "ELAN_IA",
+    "directClientConversation": false,
+    "externalProvidersEnabled": false,
+    "realImageGenerationEnabled": false,
+    "videoGenerationEnabled": false,
+    "productionSupabaseEnabled": false
+  },
+  "proposals": {
+    "included": 3,
+    "administrativeAuthorizationRequiredAfterLimit": true
+  },
+  "storage": {
+    "rendersInGit": false,
+    "officialSource": "SUPABASE_FUTURE"
+  }
+}

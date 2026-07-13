@@ -1,0 +1,105 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://elankav.com/schemas/DesignResult.schema.json",
+  "title": "DesignResult",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "designId",
+    "status",
+    "profile",
+    "version",
+    "assets",
+    "qa",
+    "cost",
+    "warnings",
+    "platform",
+    "branding",
+    "elanIaResult"
+  ],
+  "properties": {
+    "designId": {
+      "type": ["string", "null"]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "RECEIVED",
+        "VALIDATED",
+        "PLANNED",
+        "PROCESSED",
+        "QA_FAILED",
+        "READY_FOR_ELAN_IA",
+        "BLOCKED"
+      ]
+    },
+    "profile": {
+      "type": ["object", "null"]
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "assets": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "qa": {
+      "oneOf": [
+        {
+          "$ref": "./QaResult.schema.json"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "cost": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["authorized", "amount", "currency"],
+      "properties": {
+        "authorized": {
+          "type": "boolean"
+        },
+        "amount": {
+          "type": ["number", "null"]
+        },
+        "currency": {
+          "type": ["string", "null"]
+        }
+      }
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "platform": {
+      "type": "string",
+      "minLength": 1
+    },
+    "branding": {
+      "type": ["object", "null"]
+    },
+    "elanIaResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "conversational", "clientReady"],
+      "properties": {
+        "type": {
+          "const": "DESIGN_RESULT"
+        },
+        "conversational": {
+          "const": false
+        },
+        "clientReady": {
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}

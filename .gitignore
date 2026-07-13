@@ -1,0 +1,14 @@
+node_modules/
+.env
+.env.*
+!.env.example
+coverage/
+dist/
+tmp/
+temp/
+renders/
+assets/generated/
+*.log
+*.key
+*.pem
+.DS_Store
