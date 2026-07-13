@@ -2,17 +2,26 @@
   "engine": {
     "entrySource": "ELAN_IA",
     "directClientConversation": false,
-    "externalProvidersEnabled": false,
-    "realImageGenerationEnabled": false,
+    "externalProvidersEnabled": true,
+    "realImageGenerationEnabled": true,
     "videoGenerationEnabled": false,
     "productionSupabaseEnabled": false
+  },
+  "image": {
+    "provider": "openai",
+    "modelEnvironmentVariable": "OPENAI_IMAGE_MODEL",
+    "defaultModel": "gpt-image-2",
+    "timeoutEnvironmentVariable": "DESIGN_IMAGE_TIMEOUT_MS",
+    "defaultTimeoutMs": 120000
+  },
+  "storage": {
+    "rendersInGit": false,
+    "outputDirectoryEnvironmentVariable": "DESIGN_OUTPUT_DIR",
+    "publicBaseUrlEnvironmentVariable": "DESIGN_PUBLIC_BASE_URL",
+    "officialSource": "FILESYSTEM_TEMPORARY"
   },
   "proposals": {
     "included": 3,
     "administrativeAuthorizationRequiredAfterLimit": true
-  },
-  "storage": {
-    "rendersInGit": false,
-    "officialSource": "SUPABASE_FUTURE"
   }
 }
