@@ -67,7 +67,7 @@ class OpenAIImageAdapter {
           n: 1,
           size,
           quality,
-          response_format: 'b64_json',
+          output_format: 'png',
         }),
         signal: controller.signal,
       });
