@@ -3,23 +3,20 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const { Readable } = require('node:stream');
-
 const {
-  createInternalDesignApi
+  createInternalDesignApi,
 } = require('../api/internalDesignApi');
 
 function createRequest({
   method = 'GET',
   url = '/',
-  body = null
+  body = null,
 } = {}) {
   const req = Readable.from(
     body === null ? [] : [Buffer.from(body)]
   );
-
   req.method = method;
   req.url = url;
-
   return req;
 }
 
@@ -27,7 +24,7 @@ function createResponse() {
   const capture = {
     statusCode: null,
     headers: {},
-    payload: null
+    payload: null,
   };
 
   return {
@@ -44,13 +41,15 @@ function createResponse() {
       },
       get statusCode() {
         return capture.statusCode;
-      }
-    }
+      },
+    },
   };
 }
 
-test('health confirma motor disponible sin proveedores externos', async () => {
-  const handler = createInternalDesignApi();
+test('health confirma generación real disponible', async () => {
+  const handler = createInternalDesignApi({
+    designEngine: { async execute() { return {}; } },
+  });
   const { capture, res } = createResponse();
 
   const handled = await handler(
@@ -61,14 +60,34 @@ test('health confirma motor disponible sin proveedores externos', async () => {
   assert.equal(handled, true);
   assert.equal(capture.statusCode, 200);
   assert.equal(capture.payload.status, 'OK');
-  assert.equal(
-    capture.payload.externalProvidersEnabled,
-    false
-  );
+  assert.equal(capture.payload.realImageGenerationEnabled, true);
 });
 
-test('acepta solicitud estructurada proveniente de ELAN IA', async () => {
-  const handler = createInternalDesignApi();
+test('/internal/design devuelve PROCESSED con asset', async () => {
+  const assetId = '33333333-3333-4333-8333-333333333333';
+  const handler = createInternalDesignApi({
+    designEngine: {
+      async execute(input) {
+        assert.equal(input.actor.source, 'ELAN_IA');
+        return {
+          designId: assetId,
+          status: 'PROCESSED',
+          assets: [{
+            id: assetId,
+            type: 'IMAGE',
+            mimeType: 'image/png',
+            platform: 'ELANVISUAL',
+            url: `https://orchestrator.elankav.com/api/design-assets/${assetId}`,
+          }],
+          qa: { approved: true },
+          elanIaResult: {
+            clientReady: true,
+            conversational: false,
+          },
+        };
+      },
+    },
+  });
   const { capture, res } = createResponse();
 
   await handler(
@@ -79,21 +98,21 @@ test('acepta solicitud estructurada proveniente de ELAN IA', async () => {
         requestId: 'REQ-API-001',
         actor: { source: 'ELAN_IA' },
         platform: 'ELANVISUAL',
+        projectType: 'Rótulo exterior',
         measurementStatus: 'MISSING',
-        measurements: [],
-        directClientConversation: false
-      })
+        instructions: ['Fondo negro'],
+        directClientConversation: false,
+      }),
     }),
     res
   );
 
   assert.equal(capture.statusCode, 200);
   assert.equal(capture.payload.success, true);
-  assert.equal(capture.payload.result.status, 'PLANNED');
-  assert.equal(
-    capture.payload.result.elanIaResult.conversational,
-    false
-  );
+  assert.equal(capture.payload.result.status, 'PROCESSED');
+  assert.equal(capture.payload.result.assets.length, 1);
+  assert.equal(capture.payload.result.elanIaResult.clientReady, true);
+  assert.equal(capture.payload.result.elanIaResult.conversational, false);
 });
 
 test('rechaza entrada que no proviene de ELAN IA', async () => {
@@ -107,8 +126,30 @@ test('rechaza entrada que no proviene de ELAN IA', async () => {
       body: JSON.stringify({
         actor: { source: 'CLIENT' },
         platform: 'ELANVISUAL',
-        measurementStatus: 'MISSING'
-      })
+        measurementStatus: 'MISSING',
+      }),
+    }),
+    res
+  );
+
+  assert.equal(capture.statusCode, 422);
+  assert.equal(capture.payload.error, 'INVALID_ENTRY_SOURCE');
+});
+
+test('conversación directa continúa prohibida', async () => {
+  const handler = createInternalDesignApi();
+  const { capture, res } = createResponse();
+
+  await handler(
+    createRequest({
+      method: 'POST',
+      url: '/internal/design',
+      body: JSON.stringify({
+        actor: { source: 'ELAN_IA' },
+        platform: 'ELANVISUAL',
+        measurementStatus: 'MISSING',
+        directClientConversation: true,
+      }),
     }),
     res
   );
@@ -116,7 +157,7 @@ test('rechaza entrada que no proviene de ELAN IA', async () => {
   assert.equal(capture.statusCode, 422);
   assert.equal(
     capture.payload.error,
-    'INVALID_ENTRY_SOURCE'
+    'DIRECT_CLIENT_CONVERSATION_FORBIDDEN'
   );
 });
 
@@ -128,7 +169,7 @@ test('rechaza JSON inválido', async () => {
     createRequest({
       method: 'POST',
       url: '/internal/design',
-      body: '{invalid'
+      body: '{invalid',
     }),
     res
   );
@@ -140,11 +181,9 @@ test('rechaza JSON inválido', async () => {
 test('devuelve false para rutas no reconocidas', async () => {
   const handler = createInternalDesignApi();
   const { res } = createResponse();
-
   const handled = await handler(
     createRequest({ url: '/unknown' }),
     res
   );
-
   assert.equal(handled, false);
 });
