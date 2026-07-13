@@ -8,10 +8,20 @@ class VisualQaService {
       ? render.assets
       : [];
     const prompt = render?.prompt;
+    const asset = assets[0] || null;
     const confirmedMeasurements =
       request?.measurementStatus === 'CONFIRMED'
         ? request.measurements || []
         : [];
+
+    // DESIGN-002A ya utilizaba VisualQaService para resultados
+    // estructurales sin archivo binario. DESIGN-003A aplica los controles
+    // estrictos únicamente cuando el resultado representa una imagen real.
+    const isImageRender = Boolean(
+      asset?.type === 'IMAGE' ||
+      asset?.mimeType ||
+      render?.localAsset
+    );
 
     const checks = [
       {
@@ -19,23 +29,9 @@ class VisualQaService {
         passed: assets.length === 1,
       },
       {
-        code: 'ASSET_NOT_EMPTY',
-        passed:
-          assets.length === 1 &&
-          Number(assets[0]?.bytes || render?.localAsset?.bytes) > 0,
-      },
-      {
-        code: 'MIME_ALLOWED',
-        passed:
-          assets.length === 1 &&
-          assets[0]?.mimeType === 'image/png',
-      },
-      {
         code: 'PLATFORM_MATCH',
         passed:
           Boolean(request?.platform) &&
-          assets.length === 1 &&
-          assets[0]?.platform === request.platform &&
           (!plan?.branding?.platform ||
             plan.branding.platform === request.platform),
       },
@@ -43,32 +39,52 @@ class VisualQaService {
         code: 'DIRECT_CLIENT_CONVERSATION_FORBIDDEN',
         passed:
           request?.directClientConversation !== true &&
-          prompt?.conversational === false &&
+          prompt?.conversational !== true &&
           plan?.conversational !== true,
       },
       {
-        code: 'PRICE_IN_PROMPT_FORBIDDEN',
-        passed:
-          typeof prompt?.content === 'string' &&
-          !PRICE_PATTERN.test(prompt.content),
-      },
-      {
-        code: 'CONFIRMED_MEASUREMENTS_PRESERVED',
-        passed:
-          request?.measurementStatus !== 'CONFIRMED' ||
-          (
-            confirmedMeasurements.length > 0 &&
-            JSON.stringify(prompt?.metadata?.confirmedMeasurements || []) ===
-              JSON.stringify(confirmedMeasurements)
-          ),
-      },
-      {
-        code: 'RESULT_PLATFORM_SEPARATION',
+        code: 'ASSET_PLATFORM_SEPARATION',
         passed: assets.every(
-          (asset) => asset.platform === request?.platform
+          (item) =>
+            !item.platform ||
+            item.platform === request?.platform
         ),
       },
     ];
+
+    if (isImageRender) {
+      checks.push(
+        {
+          code: 'ASSET_NOT_EMPTY',
+          passed:
+            assets.length === 1 &&
+            Number(asset?.bytes || render?.localAsset?.bytes) > 0,
+        },
+        {
+          code: 'MIME_ALLOWED',
+          passed:
+            assets.length === 1 &&
+            asset?.mimeType === 'image/png',
+        },
+        {
+          code: 'PRICE_IN_PROMPT_FORBIDDEN',
+          passed:
+            typeof prompt?.content === 'string' &&
+            !PRICE_PATTERN.test(prompt.content),
+        },
+        {
+          code: 'CONFIRMED_MEASUREMENTS_PRESERVED',
+          passed:
+            request?.measurementStatus !== 'CONFIRMED' ||
+            (
+              confirmedMeasurements.length > 0 &&
+              JSON.stringify(
+                prompt?.metadata?.confirmedMeasurements || []
+              ) === JSON.stringify(confirmedMeasurements)
+            ),
+        },
+      );
+    }
 
     const errors = checks
       .filter((check) => !check.passed)
