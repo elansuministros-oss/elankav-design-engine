@@ -60,6 +60,20 @@ class DesignRequestService {
       measurements: Array.isArray(input.measurements)
         ? input.measurements.map((item) => Object.freeze({ ...item }))
         : [],
+      references: Array.isArray(input.references)
+        ? input.references.map(item =>
+          typeof item === 'object' && item !== null
+            ? Object.freeze({ ...item })
+            : item
+        )
+        : [],
+      brandAssets: Array.isArray(input.brandAssets)
+        ? input.brandAssets.map(item =>
+          typeof item === 'object' && item !== null
+            ? Object.freeze({ ...item })
+            : item
+        )
+        : [],
     });
   }
 }

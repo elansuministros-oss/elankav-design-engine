@@ -3,6 +3,7 @@
 const { DesignEngineError } = require('../../errors/DesignEngineError');
 
 const DEFAULT_ENDPOINT = 'https://api.openai.com/v1/images/generations';
+const DEFAULT_EDIT_ENDPOINT = 'https://api.openai.com/v1/images/edits';
 const DEFAULT_MODEL = 'gpt-image-2';
 const DEFAULT_TIMEOUT_MS = 120000;
 
@@ -14,12 +15,14 @@ class OpenAIImageAdapter {
       process.env.DESIGN_IMAGE_TIMEOUT_MS || DEFAULT_TIMEOUT_MS
     ),
     endpoint = DEFAULT_ENDPOINT,
+    editEndpoint = DEFAULT_EDIT_ENDPOINT,
     fetchImpl = globalThis.fetch,
   } = {}) {
     this.apiKey = apiKey;
     this.model = model;
     this.timeoutMs = timeoutMs;
     this.endpoint = endpoint;
+    this.editEndpoint = editEndpoint;
     this.fetchImpl = fetchImpl;
   }
 
@@ -29,6 +32,7 @@ class OpenAIImageAdapter {
     platform,
     size = '1024x1024',
     quality = 'medium',
+    referenceImages = [],
   } = {}) {
     if (!this.apiKey) {
       throw new DesignEngineError(
@@ -55,22 +59,51 @@ class OpenAIImageAdapter {
     const timeout = setTimeout(() => controller.abort(), this.timeoutMs);
 
     try {
-      const response = await this.fetchImpl(this.endpoint, {
-        method: 'POST',
-        headers: {
-          authorization: `Bearer ${this.apiKey}`,
-          'content-type': 'application/json',
-        },
-        body: JSON.stringify({
+      const hasReferences = Array.isArray(referenceImages) &&
+        referenceImages.length > 0;
+      let body;
+      let headers;
+
+      if (hasReferences) {
+        body = new FormData();
+        body.set('model', this.model);
+        body.set('prompt', prompt);
+        body.set('n', '1');
+        body.set('size', size);
+        body.set('quality', quality);
+        body.set('output_format', 'png');
+
+        for (const image of referenceImages.slice(0, 4)) {
+          body.append(
+            'image[]',
+            new Blob([image.buffer], { type: image.mimeType }),
+            image.fileName || 'reference.png'
+          );
+        }
+      } else {
+        headers = { 'content-type': 'application/json' };
+        body = JSON.stringify({
           model: this.model,
           prompt,
           n: 1,
           size,
           quality,
           output_format: 'png',
-        }),
+        });
+      }
+
+      const response = await this.fetchImpl(
+        hasReferences ? this.editEndpoint : this.endpoint,
+        {
+        method: 'POST',
+        headers: {
+          authorization: `Bearer ${this.apiKey}`,
+          ...headers,
+        },
+        body,
         signal: controller.signal,
-      });
+        }
+      );
 
       let payload;
       try {
@@ -141,6 +174,7 @@ class OpenAIImageAdapter {
         bytes: buffer.length,
         buffer,
         usage: payload?.usage || null,
+        mode: hasReferences ? 'edit' : 'generation',
       };
     } catch (error) {
       if (error?.name === 'AbortError') {
@@ -169,6 +203,7 @@ class OpenAIImageAdapter {
 module.exports = {
   OpenAIImageAdapter,
   DEFAULT_ENDPOINT,
+  DEFAULT_EDIT_ENDPOINT,
   DEFAULT_MODEL,
   DEFAULT_TIMEOUT_MS,
 };

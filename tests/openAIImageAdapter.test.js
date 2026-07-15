@@ -107,3 +107,38 @@ test('adapter distingue moderación', async () => {
     { code: 'OPENAI_IMAGE_MODERATION_REJECTED' }
   );
 });
+
+test('adapter usa images edits cuando recibe referencia visual', async () => {
+  let sentUrl;
+  let sentBody;
+  const source = Buffer.from('edited-png');
+  const adapter = new OpenAIImageAdapter({
+    apiKey: 'test-key',
+    editEndpoint: 'https://api.openai.test/v1/images/edits',
+    fetchImpl: async (url, options) => {
+      sentUrl = url;
+      sentBody = options.body;
+      assert.equal(options.headers['content-type'], undefined);
+      return jsonResponse({
+        data: [{ b64_json: source.toString('base64') }],
+      });
+    },
+  });
+
+  const result = await adapter.generateImage({
+    prompt: 'Adaptar el rótulo a la referencia suministrada',
+    requestId: 'REQ-EDIT-1',
+    referenceImages: [{
+      buffer: Buffer.from('reference-image'),
+      mimeType: 'image/jpeg',
+      fileName: 'reference.jpg',
+    }],
+  });
+
+  assert.equal(sentUrl, 'https://api.openai.test/v1/images/edits');
+  assert.equal(sentBody instanceof FormData, true);
+  assert.equal(sentBody.get('model'), 'gpt-image-2');
+  assert.equal(sentBody.getAll('image[]').length, 1);
+  assert.equal(result.mode, 'edit');
+  assert.deepEqual(result.buffer, source);
+});

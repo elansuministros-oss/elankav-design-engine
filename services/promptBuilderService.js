@@ -37,10 +37,15 @@ class PromptBuilderService {
     const projectType =
       request.projectType || request.designType || request.type || null;
     const instructions = stringifyValue(request.instructions);
-    const references = stringifyValue(request.references);
-    const brandAssets = stringifyValue(
+    const references = Array.isArray(request.references)
+      ? request.references.filter(Boolean)
+      : [];
+    const brandAssets = Array.isArray(
       request.brandAssets || request.assets || request.logoAssets
-    );
+    )
+      ? (request.brandAssets || request.assets || request.logoAssets)
+        .filter(Boolean)
+      : [];
     const materials = stringifyValue(request.materials);
     const lighting = stringifyValue(
       request.lighting || request.lightingType
@@ -49,7 +54,7 @@ class PromptBuilderService {
       plan?.profile?.id || request.profileId || 'DEFAULT';
 
     const hasUsefulDescription = Boolean(
-      projectType || instructions || references || materials || lighting
+      projectType || instructions || references.length || materials || lighting
     );
 
     if (!request.platform || !hasUsefulDescription) {
@@ -104,10 +109,12 @@ class PromptBuilderService {
       instructions ? `Instrucciones: ${instructions}.` : null,
       materials ? `Materiales indicados: ${materials}.` : null,
       lighting ? `Iluminación indicada: ${lighting}.` : null,
-      brandAssets
-        ? `Usar únicamente estos assets de marca suministrados: ${brandAssets}. No inventar logotipos.`
+      brandAssets.length
+        ? 'Usar únicamente los assets de marca suministrados como entradas visuales. No inventar logotipos.'
         : 'No inventar logotipos ni marcas.',
-      references ? `Referencias autorizadas: ${references}.` : null,
+      references.length
+        ? 'Usar las imágenes de referencia suministradas como guía visual autorizada.'
+        : null,
       'No introducir precios, promociones ni cifras comerciales.',
       'No cambiar la arquitectura real, proporciones confirmadas ni ubicación de montaje para mejorar el impacto visual.',
       'No agregar objetos, textos, estructuras o elementos que no fueron solicitados.',

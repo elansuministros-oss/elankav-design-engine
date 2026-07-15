@@ -11,6 +11,7 @@ class RenderService {
   constructor({
     imageAdapter = null,
     promptBuilderService = null,
+    referenceImageAdapter = null,
     outputDir = process.env.DESIGN_OUTPUT_DIR ||
       '/var/lib/elankav/design-engine/renders',
     publicBaseUrl = process.env.DESIGN_PUBLIC_BASE_URL ||
@@ -20,6 +21,7 @@ class RenderService {
   } = {}) {
     this.imageAdapter = imageAdapter;
     this.promptBuilderService = promptBuilderService;
+    this.referenceImageAdapter = referenceImageAdapter;
     this.outputDir = outputDir;
     this.publicBaseUrl = publicBaseUrl.replace(/\/$/, '');
     this.fsImpl = fsImpl;
@@ -53,12 +55,28 @@ class RenderService {
       };
     }
 
+    const visualReferences = [
+      ...(Array.isArray(request.references) ? request.references : []),
+      ...(Array.isArray(request.brandAssets) ? request.brandAssets : []),
+    ];
+    const referenceImages = visualReferences.length
+      ? await this.referenceImageAdapter?.downloadMany(visualReferences)
+      : [];
+
+    if (visualReferences.length && !this.referenceImageAdapter) {
+      throw new DesignEngineError(
+        'REFERENCE_IMAGE_ADAPTER_REQUIRED',
+        'Render Service requiere el adapter de referencias visuales.'
+      );
+    }
+
     const generated = await this.imageAdapter.generateImage({
       prompt: prompt.content,
       requestId: request.requestId,
       platform: request.platform,
       size: request.image?.size || request.size || '1024x1024',
       quality: request.image?.quality || request.quality || 'medium',
+      referenceImages,
     });
 
     if (
