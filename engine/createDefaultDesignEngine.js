@@ -16,6 +16,9 @@ const {
 const {
   OpenAIImageAdapter,
 } = require('../adapters/image/OpenAIImageAdapter');
+const {
+  ReferenceImageAdapter,
+} = require('../adapters/image/ReferenceImageAdapter');
 
 function createDefaultDesignEngine(options = {}) {
   const designRequestService =
@@ -24,10 +27,14 @@ function createDefaultDesignEngine(options = {}) {
     options.promptBuilderService || new PromptBuilderService();
   const imageAdapter =
     options.imageAdapter || new OpenAIImageAdapter(options.openAI || {});
+  const referenceImageAdapter =
+    options.referenceImageAdapter ||
+    new ReferenceImageAdapter(options.references || {});
   const renderService =
     options.renderService || new RenderService({
       imageAdapter,
       promptBuilderService,
+      referenceImageAdapter,
       outputDir: options.outputDir,
       publicBaseUrl: options.publicBaseUrl,
     });

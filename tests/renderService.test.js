@@ -107,3 +107,65 @@ test('prompt conserva medidas confirmadas y excluye precios', () => {
   assert.doesNotMatch(prompt.content, /USD|NIO|C\$|U\$|\$\s*\d/i);
   assert.match(prompt.content, /1\.5/);
 });
+
+test('render descarga referencia y la entrega al adapter de edición', async () => {
+  const fsMock = createFsMock();
+  let receivedReferences;
+  const service = new RenderService({
+    promptBuilderService: new PromptBuilderService(),
+    referenceImageAdapter: {
+      async downloadMany(references) {
+        assert.equal(references.length, 1);
+        return [{
+          buffer: Buffer.from('reference'),
+          mimeType: 'image/jpeg',
+          fileName: 'reference.jpg',
+        }];
+      },
+    },
+    imageAdapter: {
+      async generateImage(input) {
+        receivedReferences = input.referenceImages;
+        return {
+          provider: 'openai',
+          model: 'gpt-image-2',
+          mimeType: 'image/png',
+          buffer: Buffer.from('edited-png'),
+        };
+      },
+    },
+    fsImpl: fsMock,
+    idFactory: () => FIXED_ID,
+  });
+
+  const result = await service.execute({
+    request: {
+      requestId: 'REQ-REFERENCE-1',
+      platform: 'ELANVISUAL',
+      measurementStatus: 'MISSING',
+      references: [{
+        url: 'https://elankav-core.vercel.app/api/whatsapp-media?signature=test'
+      }],
+    },
+  });
+
+  assert.equal(receivedReferences.length, 1);
+  assert.equal(result.status, 'PROCESSED');
+});
+
+test('prompt no incorpora URLs firmadas', () => {
+  const builder = new PromptBuilderService();
+  const prompt = builder.build({
+    request: {
+      platform: 'ELANVISUAL',
+      measurementStatus: 'MISSING',
+      references: [{
+        url: 'https://elankav-core.vercel.app/api/whatsapp-media?signature=secret'
+      }],
+    },
+  });
+
+  assert.equal(prompt.type, 'DESIGN_PROMPT');
+  assert.doesNotMatch(prompt.content, /https?:\/\//);
+  assert.doesNotMatch(prompt.content, /signature=/);
+});
