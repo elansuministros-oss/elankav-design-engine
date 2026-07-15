@@ -4,6 +4,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const {
   ReferenceImageAdapter,
+  decodeInlineImage,
 } = require('../adapters/image/ReferenceImageAdapter');
 
 function imageResponse(buffer, mimeType = 'image/jpeg') {
@@ -37,6 +38,25 @@ test('descarga referencia únicamente desde host y ruta autorizados', async () =
 
   assert.deepEqual(result.buffer, source);
   assert.equal(result.mimeType, 'image/jpeg');
+});
+
+test('acepta referencia interna base64 con límites y formato estricto', async () => {
+  const source = Buffer.from('inline-reference');
+  const dataUrl = `data:image/png;base64,${source.toString('base64')}`;
+  const decoded = decodeInlineImage({
+    dataUrl,
+    fileName: 'logo.png',
+  });
+
+  assert.deepEqual(decoded.buffer, source);
+  assert.equal(decoded.mimeType, 'image/png');
+  assert.equal(decoded.fileName, 'logo.png');
+
+  const adapter = new ReferenceImageAdapter({ maxBytes: 4 });
+  await assert.rejects(
+    () => adapter.download({ dataUrl }),
+    { code: 'REFERENCE_IMAGE_SIZE_EXCEEDED' }
+  );
 });
 
 test('bloquea host arbitrario y archivo demasiado grande', async () => {
