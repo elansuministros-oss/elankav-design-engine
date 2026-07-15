@@ -11,6 +11,49 @@ const ALLOWED_MIME_TYPES = new Set([
   'image/webp',
 ]);
 
+function decodeInlineImage(reference, maxBytes = DEFAULT_MAX_BYTES) {
+  const value = typeof reference === 'object' && reference !== null
+    ? reference.dataUrl
+    : null;
+  const match = String(value || '').match(
+    /^data:(image\/(?:jpeg|png|webp));base64,([a-z0-9+/=\r\n]+)$/i
+  );
+
+  if (!match) {
+    throw new DesignEngineError(
+      'REFERENCE_IMAGE_INLINE_INVALID',
+      'La referencia visual interna no contiene una imagen válida.'
+    );
+  }
+
+  const mimeType = normalizeMimeType(match[1]);
+  const buffer = Buffer.from(match[2], 'base64');
+
+  if (!ALLOWED_MIME_TYPES.has(mimeType)) {
+    throw new DesignEngineError(
+      'REFERENCE_IMAGE_MIME_REJECTED',
+      'El formato de la referencia visual no está permitido.'
+    );
+  }
+
+  if (!buffer.length || buffer.length > maxBytes) {
+    throw new DesignEngineError(
+      buffer.length
+        ? 'REFERENCE_IMAGE_SIZE_EXCEEDED'
+        : 'REFERENCE_IMAGE_EMPTY',
+      buffer.length
+        ? 'La referencia visual excede el tamaño permitido.'
+        : 'La referencia visual está vacía.'
+    );
+  }
+
+  return Object.freeze({
+    buffer,
+    mimeType,
+    fileName: reference.fileName || `reference.${mimeType.split('/')[1]}`,
+  });
+}
+
 function positiveNumber(value, fallback) {
   const number = Number(value);
   return Number.isFinite(number) && number > 0 ? number : fallback;
@@ -82,6 +125,10 @@ class ReferenceImageAdapter {
   }
 
   async download(reference) {
+    if (reference && typeof reference === 'object' && reference.dataUrl) {
+      return decodeInlineImage(reference, this.maxBytes);
+    }
+
     if (typeof this.fetchImpl !== 'function') {
       throw new DesignEngineError(
         'REFERENCE_IMAGE_TRANSPORT_UNAVAILABLE',
@@ -169,7 +216,11 @@ class ReferenceImageAdapter {
     }
 
     const selected = references
-      .filter(reference => reference && (reference.url || typeof reference === 'string'))
+      .filter(reference => reference && (
+        reference.url ||
+        reference.dataUrl ||
+        typeof reference === 'string'
+      ))
       .slice(0, 4);
 
     return Promise.all(selected.map(reference => this.download(reference)));
@@ -179,6 +230,7 @@ class ReferenceImageAdapter {
 module.exports = {
   ReferenceImageAdapter,
   ALLOWED_MIME_TYPES,
+  decodeInlineImage,
   DEFAULT_ALLOWED_HOSTS,
   DEFAULT_MAX_BYTES,
   DEFAULT_TIMEOUT_MS,
